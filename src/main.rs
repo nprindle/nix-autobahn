@@ -116,9 +116,12 @@ fn main() {
     // initilizes packages list and adds additional-packages right away, if
     // provided
 
+    let binary_path = &opts.binary.canonicalize().unwrap();
+
     opts.pkgs.dedup();
     opts.pkgs.sort();
 
+    opts.libs.append(&mut missing_libs(binary_path));
     opts.libs.dedup();
     opts.libs.sort();
 
@@ -155,7 +158,7 @@ fn main() {
         }
 
         // build FHS expression
-        let fhs_expression = fhs_shell(&opts.binary.canonicalize().unwrap(), opts.pkgs);
+        let fhs_expression = fhs_shell(binary_path, opts.pkgs);
         // write bash script with the FHS expression
         write_bash_script(
             &opts.binary.with_file_name("run-with-nix"),
