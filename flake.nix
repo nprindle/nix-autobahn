@@ -30,12 +30,23 @@
       {
         defaultPackage = self.packages.${system}.nix-autobahn;
 
-        packages.nix-autobahn = naersk-lib.buildPackage {
-          src = ./.;
-          nativeBuildInputs = with pkgs; [ pkgsStatic.stdenv.cc ];
-          CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
-          CARGO_BUILD_RUSTFLAGS = "-C target-feature=+crt-static";
-        };
+        packages.nix-autobahn =
+          let
+            nix-autobahn = naersk-lib.buildPackage {
+              src = ./.;
+              nativeBuildInputs = with pkgs; [ pkgsStatic.stdenv.cc ];
+              CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
+              CARGO_BUILD_RUSTFLAGS = "-C target-feature=+crt-static";
+            };
+          in
+          nix-autobahn.overrideAttrs (old: {
+            nativeBuildInputs = (old.nativeBuildInputs or "") ++ [ pkgs.makeWrapper ];
+            postInstall = ''
+              wrapProgram \
+                "$out"/bin/nix-autobahn \
+                --prefix PATH : "${pkgs.nix-index}/bin"
+            '';
+          });
 
         defaultApp = self.apps.${system}.nix-autobahn;
 
